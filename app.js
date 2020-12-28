@@ -1,3 +1,7 @@
+let {PythonShell} = require('python-shell')
+
+const { finished } = require('stream');
+
 const express = require('express'),
       bodyParser = require('body-parser'),
       http = require('http'),
@@ -53,18 +57,15 @@ async function executeQuery(sqlStatement, bind, insert=false) {
     let query;
     let resp = false;
 
-    try {
+    if (databaseConnected) {
         query = await connection.execute(sqlStatement, bind);
         resp = true;
-        console.log('Query executed');
-        console.log(query.rows);
+
         if (!insert) {
             if (query.rows.length == 0) {
                 resp = false;
             }
         }
-    } catch (err) {
-        console.error(err);
     }
 
     console.log('Return value');
@@ -84,6 +85,16 @@ function checkIp(ip) {
 }
 
 let ip = (req) => req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+let queryGenres = async () => {
+    let genreResp = await executeQuery('select * from genres', {});
+    console.log('Genres queried');
+    genres = (genreResp.resp) ? genreResp.query.rows : [];
+    initGenres = true;
+};
+
+let getUserByIp = (req) => {
+    ip(req)
+};
 
 app.use(express.static('public'));
 app.use('/css', express.static(__dirname + 'public/css'));
@@ -105,10 +116,7 @@ app.get('/', async (req, res) => {
     console.log(ip(req));
 
     if (!initGenres) {
-        let genreResp = await executeQuery('select * from genres', {});
-        console.log('Genres executed');
-        genres = (genreResp.resp) ? genreResp.query.rows : [];
-        initGenres = true;
+        queryGenres();
     }
 
     if (!checkIp(ip(req))) {
@@ -124,10 +132,14 @@ app.get('/dev', (req, res) => {
     res.render('dev', { "title" : "Developer | Store", "pageTitle" : "Developer Dashboard", "data" : developerData });
 });
 
+app.get('/profile', (req, res) => {
+    res.render('profile', { "title" : "Profile | Store", "pageTitle" : "Profile" });
+});
+
 /*
     Post request for the login page
 */
-app.post('/auth', async (req, res) => {
+app.post('/login', async (req, res) => {
     var username = req.body.username;
     var password = req.body.password;
 
@@ -140,20 +152,21 @@ app.post('/auth', async (req, res) => {
                 const queriedUsername = response.query.rows[0][0];
                 const queriedPassword = response.query.rows[0][3];
 
-                if ((username.localeCompare(queriedUsername) == 0) && (sha256(password).localeCompare(queriedPassword) == 0)) {
-                    console.log(`Connection accepted for ${ip} user=${username}`)
+                if ((username === queriedUsername) && (sha256(password) === queriedPassword)) {
+                    console.log(`Connection accepted for ${ip(req)} user=${username}`)
 
-                    var element = { username : queriedUsername, ip: ip };
+                    var element = { username : queriedUsername, ip: ip(req) };
                     connectedUsers.pushSet(element, function(e) {
                         return e.username === element.username && e.ip === element.ip;
                     });
 
                     if (checkIp(ip(req))) {
+                        console.log('Redirected');
                         res.redirect('/store');
                     }
                 }
                 else {
-                    console.log(`Connection rejected for ${ip} user=${username}`)
+                    console.log(`Connection rejected for ${ip(req)} user=${username}`)
                     res.redirect('/');
                 }
             }
@@ -179,19 +192,33 @@ app.post('/register', async (req, res) => {
     
     if (databaseConnected) {
         if (password.localeCompare(confirmPassword) == 0) {
-            let query = await executeQuery('insert into users values (:username, :email, \'DESKTOP\', :password, :ip)', {
-                'username' : username,
-                'email' : email,
-                'password' : sha256(password),
-                'ip' : ip(req)
-            }, true);
+            let query = await executeQuery(
+                'insert into users values (:username, :email, \'DESKTOP\', :password, :ip)', 
+                {
+                    'username' : username,
+                    'email' : email,
+                    'password' : sha256(password),
+                    'ip' : ip(req)
+                }, 
+                true
+            );
 
             res.redirect('/');
         }
     }
 });
 
-server.listen(port, '192.168.100.23', () => {
+server.listen(port, () => { 
+    var hostIp;
+
+    PythonShell.run('get_host.py', null, (err, results) => {
+        if (err) throw err;
+        hostIp = results[0];
+        console.log('finished');
+    });
+
+    return hostIp;
+ }, () => {
     console.log(`Listening on port ${port}`);
     createConnection();
 });
@@ -199,7 +226,12 @@ server.listen(port, '192.168.100.23', () => {
 process.on('SIGINT', async function() {
     console.log('Exiting app...');
     if (databaseConnected) {
-        await connection.close();
-        process.exit();
+        try {
+            await connection.close();
+            process.exit();
+        }
+        catch (err) {
+            console.log(err);
+        }
     }
 });
