@@ -3,8 +3,34 @@
                 <input type="submit" value="SELECT">
             </form>
         </div>
-        <% for (var index = 0; index < data.length; index++) { %>
-            <h1><%= [data[index][0], data[index][1], data[index][2], data[index][3], data[index][4]] %></h1>
-        <% } %>
+        <div class="row clearfix">
+            <div class="col-lg-3 col-sm-6 col-md-3">
+                <a href="productpage.html">
+                   <div class="box-img">
+                        <p>text</p>
+                   </div>
+                </a>
+             </div>
+             <div class="col-sm-3">
+                <a href="productpage.html">
+                   <div class="box-img">
+                      <img src="images/red_dead_redemption.jpg" alt="" />
+                   </div>
+                </a>
+             </div>
+             <div class="col-lg-3 col-sm-6 col-md-3">
+                <a href="productpage.html">
+                   <div class="box-img">
+                      <img src="images/red_dead_redemption.jpg" alt="" />
+                   </div>
+                </a>
+             </div>
+        </div>
+        <div>
+            <% for (var index = 0; index < data.length; index++) { %>
+                <h1><%= data[index][0] %></h1>
+                <!-- <h1><%= data[index][1] %></h1> -->
+            <% } %>
+        </div>
     </body>
 </html>

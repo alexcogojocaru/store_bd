@@ -1,20 +1,19 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const http = require('http');
-const oracledb = require('oracledb');
-const dbConfig = require('./dbconfig.js');
-const sha256 = require('js-sha256').sha256;
+const express = require('express'),
+      bodyParser = require('body-parser'),
+      http = require('http'),
+      oracledb = require('oracledb'),
+      dbConfig = require('./dbconfig.js'),
+      sha256 = require('js-sha256').sha256,
+      app = express(),
+      server = http.createServer(app),
+      port = 3000;
 
-const app = express();
-const server = http.createServer(app);
-const port = 3000;
+let connection,
+    genres,
+    databaseConnected = initGenres = false,
+    connectedUsers = developerData = [];
 
-let connection;
-let logged = false;
-let databaseConnected = false;
-let genres;
-let connectedUsers = []
-let developerData = [];
+oracledb.autoCommit = true;
 
 Array.prototype.exists = function(comparer) {
     for (var i = 0; i < this.length; i++) {
@@ -57,7 +56,8 @@ async function executeQuery(sqlStatement, bind, insert=false) {
     try {
         query = await connection.execute(sqlStatement, bind);
         resp = true;
-
+        console.log('Query executed');
+        console.log(query.rows);
         if (!insert) {
             if (query.rows.length == 0) {
                 resp = false;
@@ -67,8 +67,23 @@ async function executeQuery(sqlStatement, bind, insert=false) {
         console.error(err);
     }
 
+    console.log('Return value');
     return new Response(resp, query);
 };
+
+function checkIp(ip) {
+    if (connectedUsers.length > 0) {
+        for (var i = 0; i < connectedUsers.length; i++) {
+            if (connectedUsers[i]['ip'] === ip) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+let ip = (req) => req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
 app.use(express.static('public'));
 app.use('/css', express.static(__dirname + 'public/css'));
@@ -81,16 +96,22 @@ app.set('views', './views');
 app.set('view engine', 'ejs');
 
 app.get('/store', (req, res) => {
-    res.render('store', { "title" : "Store", "genres" : genres });
+    if (checkIp(ip(req))) {
+        res.render('store', { "title" : "Store", "genres" : genres });
+    }
 });
 
-app.get('/about', (req, res) => {
-    res.render('about', { "title" : "About" });
-});
+app.get('/', async (req, res) => {
+    console.log(ip(req));
 
-app.get('/', (req, res) => {
-    console.log(req.headers['x-forwarded-for'] || req.connection.remoteAddress);
-    if (!logged) {
+    if (!initGenres) {
+        let genreResp = await executeQuery('select * from genres', {});
+        console.log('Genres executed');
+        genres = (genreResp.resp) ? genreResp.query.rows : [];
+        initGenres = true;
+    }
+
+    if (!checkIp(ip(req))) {
         res.render('login', { "title" : "Login | Store", "pageTitle" : "Login" });
     }
 });
@@ -109,34 +130,26 @@ app.get('/dev', (req, res) => {
 app.post('/auth', async (req, res) => {
     var username = req.body.username;
     var password = req.body.password;
-    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
     if (databaseConnected) {
         try {
             let response = await executeQuery(`select * from users where username=:username`, { "username" : username });
-            let genreResp = await executeQuery('select * from genres', {});
-            
-            genres = (genreResp.resp) ? genreResp.query.rows : [];
-            console.log(true);
+
+            console.log(`response.resp = ${response.resp}`);
             if (response.resp) {
                 const queriedUsername = response.query.rows[0][0];
                 const queriedPassword = response.query.rows[0][3];
-                console.log(true);
+
                 if ((username.localeCompare(queriedUsername) == 0) && (sha256(password).localeCompare(queriedPassword) == 0)) {
-                    var element = { username : queriedUsername, ip: ip };
-                    
                     console.log(`Connection accepted for ${ip} user=${username}`)
 
+                    var element = { username : queriedUsername, ip: ip };
                     connectedUsers.pushSet(element, function(e) {
                         return e.username === element.username && e.ip === element.ip;
                     });
-                    console.log(connectedUsers);
 
-                    for (var i = 0; i < connectedUsers.length; i++) {
-                        if (connectedUsers[i]['ip'] === ip) {
-                            res.redirect('/store');
-                            break;
-                        }
+                    if (checkIp(ip(req))) {
+                        res.redirect('/store');
                     }
                 }
                 else {
@@ -170,7 +183,7 @@ app.post('/register', async (req, res) => {
                 'username' : username,
                 'email' : email,
                 'password' : sha256(password),
-                'ip' : req.headers['x-forwarded-for'] || req.connection.remoteAddress
+                'ip' : ip(req)
             }, true);
 
             res.redirect('/');
@@ -181,4 +194,12 @@ app.post('/register', async (req, res) => {
 server.listen(port, '192.168.100.23', () => {
     console.log(`Listening on port ${port}`);
     createConnection();
+});
+
+process.on('SIGINT', async function() {
+    console.log('Exiting app...');
+    if (databaseConnected) {
+        await connection.close();
+        process.exit();
+    }
 });

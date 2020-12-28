@@ -1,8 +1,13 @@
+body {
+    background-color: #222831; /* 09294c */
+}
+
 h1 {
     text-align: center;
-    color: #4d4d4d;
+    color: #ffffff;
     font-size: 24px;
     padding: 20px 0 20px 0;
+    font-family: Tahoma, Geneva, sans-serif;
 }
 
 .data-form {
@@ -12,7 +17,7 @@ h1 {
 }
 .data-form h1 {
     text-align: center;
-    color: #4d4d4d;
+    color: #ffffff;
     font-size: 24px;
     padding: 20px 0 20px 0;
 }
