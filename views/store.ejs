@@ -1,0 +1,105 @@
+   <%- include("partials/header") -%>
+
+      <div class="page-content-product">
+         <div class="main-product">
+            <div class="container">
+               <div class="row clearfix">
+                  <div class="find-box">
+                     <div class="product-sh">
+                        <div class="col-sm-6">
+                           <div class="form-sh">
+                              <input type="text" placeholder="Search something you love" >
+                           </div>
+                        </div>
+                        <div class="col-sm-4">
+                           <div class="form-sh"> <a class="btn" href="#">Search</a> </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+               <div class="row clearfix">
+                  <% for (var index = 0; index < genres.length; index++) { %>
+                     <div class="col-lg-3 col-sm-6 col-md-3">
+                        <a href="productpage.html">
+                           <div class="box-img">
+                              <h4><%= genres[index] %></h4>
+                              <img src="images/red_dead_redemption.jpg" alt="" />
+                           </div>
+                        </a>
+                     </div>
+                  <% } %>
+               </div>
+            </div>
+         </div>
+      </div>
+      <div class="start-free-box">
+         <div class="container">
+            <div class="row">
+               <div class="main-start-box">
+                  <div class="bg_img_left"><img src="images/bg_img1.png" alt="#" /></div>
+                  <div class="container">
+                     <div class="buyer-box clearfix">
+                        <div class="col-md-6 col-sm-6 wow fadeIn" data-wow-delay="0.2s">
+                           <div class="left-buyer">
+                              <img class="img-responsive" src="images/creat_pro.png" alt="#" />
+                           </div>
+                        </div>
+                        <div class="col-md-6 col-sm-6 wow fadeIn" data-wow-delay="0.4s">
+                           <div class="right-buyer">
+                              <h4>buyer</h4>
+                              <h2>Empower your factory<br>
+                                 <span>With a new lead Channel</span>
+                              </h2>
+                              <p>Never worry about sales or income ftom outbound
+                                 channels. with chamb your store is directly
+                                 connected to thousands of interested in your
+                                 products.
+                              </p>
+                              <a href="#">Create a buyer account</a>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+            <!-- <div class="row">
+               <div class="bg_img_right"><img src="images/bg_img1.png" alt="#" /></div>
+               <div class="main-start-box">
+                  <div class="container">
+                     <div class="supplier clearfix">
+                        <div class="col-md-5 col-sm-6">
+                           <div class="left-supplier">
+                              <h4>supplier</h4>
+                              <h2>Grow your store <br><span>With a new sales channel</span></h2>
+                              <p>Never worry about sales or income ftom outbound
+                                 channels. with chamb your store is directly
+                                 connected to thousands of interested in your
+                                 products.
+                              </p>
+                              .
+                              <a href="#">Create a supplier account</a>
+                           </div>
+                        </div>
+                        <div class="col-md-7 col-sm-6">
+                           <div class="right-supplier">
+                              <img class="img-responsive" src="images/supplier-pc-img.png" alt="#" />
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div> -->
+         </div>
+      </div>
+
+      <!--main js--> 
+      <script src="js/jquery-1.12.4.min.js"></script> 
+      <!--bootstrap js--> 
+      <script src="js/bootstrap.min.js"></script> 
+      <script src="js/bootstrap-select.min.js"></script>
+      <script src="js/slick.min.js"></script> 
+      <script src="js/wow.min.js"></script>
+      <!--custom js--> 
+      <script src="js/custom.js"></script>
+   </body>
+</html>

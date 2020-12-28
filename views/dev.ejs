@@ -1,0 +1,10 @@
+    <%- include("partials/data-header") -%> 
+            <form action="dev" method="POST">
+                <input type="submit" value="SELECT">
+            </form>
+        </div>
+        <% for (var index = 0; index < data.length; index++) { %>
+            <h1><%= [data[index][0], data[index][1], data[index][2], data[index][3], data[index][4]] %></h1>
+        <% } %>
+    </body>
+</html>

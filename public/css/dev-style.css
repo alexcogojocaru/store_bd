@@ -1,0 +1,11 @@
+#selectButton {
+    width: 50%;
+    margin: 0 auto;
+    padding: 20px 0 20px 0;
+    background-color: #008CBA;
+    border: 0;
+    box-sizing: border-box;
+    cursor: pointer;
+    font-weight: bold;
+    color: #ffffff;
+}

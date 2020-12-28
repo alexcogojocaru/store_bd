@@ -1,0 +1,17 @@
+	<%- include("partials/data-header") -%>
+			<form action="auth" method="POST">
+				<input type="text" name="username" placeholder="Username" required>
+				<input type="password" name="password" placeholder="Password" required>
+				<input type="submit">
+			</form>
+
+			<input id="myButton" type="button" value="Register">
+		</div>
+	</body>
+
+	<script>
+		document.getElementById("myButton").onclick = function () {
+			location.href = "/register";
+		};
+	</script>
+</html>
