@@ -1,14 +1,53 @@
-    <%- include("partials/data-header") -%> 
-            <form action="dev" method="POST">
-                <input type="submit" value="SELECT">
-            </form>
-        </div>
-        
-        <div>
-            <% for (var index = 0; index < data.length; index++) { %>
-                <h1><%= data[index][0] %></h1>
-                <!-- <h1><%= data[index][1] %></h1> -->
-            <% } %>
-        </div>
-    </body>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title><%= title %></title>
+    <link rel="stylesheet" href="css/dev-style.css" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <form action="dev" method="POST">
+      <div id="elem">
+        <input type="submit" name="select" value="SELECT" />
+        <select id="mySelect" name="selection">
+          <option value="1">users</option>
+          <option value="2">games</option>
+          <option value="3">genres</option>
+          <option value="4">orders</option>
+          <option value="5">users_games</option>
+          <option value="6">device_type</option>
+          <option value="7">registered_devices</option>
+          <option value="8">users_devices</option>
+        </select>
+      </div>
+      <input type="submit" name="select" value="DELETE" />
+      <br>
+      <div id="elem">
+        <input type="submit" name="select" value="INSERT" />
+        <% for (var index = 0; index < inputs.length; index++) { %>
+          <input type="text" placeholder="<%= inputs[index] %>" name="<%= 'placeholder'.concat(index) %>">
+        <% } %>
+      </div>
+    </form>
+
+    <% if (select) { %>
+    <table id="users">
+      <tr>
+        <% for (var index = 0; index < dataHeader.length; index++) { %>
+        <th><%= dataHeader[index] %></th>
+        <% } %>
+      </tr>
+      <% for (var index = 0; index < data.length; index++) { %>
+      <tr>
+        <% for (var j = 0; j < data[index].length; j++) { %>
+        <td><%= data[index][j] %></td>
+        <% } %>
+      </tr>
+      <% } %>
+    </table>
+    <% } %>
+  </body>
 </html>

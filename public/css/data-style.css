@@ -39,6 +39,7 @@ h1 {
     cursor: pointer;
     font-weight: bold;
     color: #ffffff;
+    margin-top: 10px;
 }
 
 .data-form input[type="button"] {
@@ -51,4 +52,15 @@ h1 {
     cursor: pointer;
     font-weight: bold;
     color: #ffffff;
+}
+
+#elem {
+    display: flex;
+    justify-content: space-between;
+}
+
+select {
+    position: relative;
+    font-family: Arial;
+    margin-top: 10px;
 }

@@ -1,0 +1,26 @@
+<%- include("header") -%>
+<div class="page-content-product">
+    <div class="main-product">
+       <div class="container">
+          <div class="row clearfix">
+             <div class="find-box">
+                
+             </div>
+          </div>
+          <div class="row clearfix">
+             <% for (var index = 0; index < games.length; index++) { %>
+                <div class="col-lg-3 col-sm-6 col-md-3">
+                   <a href=<%= `/${pageTitle.toLowerCase()}` %>>
+                      <div class="box-img">
+                         <h4><%= games[index][0] %></h4>
+                         <img src="images/red_dead_redemption.jpg" alt="" />
+                      </div>
+                   </a>
+                </div>
+             <% } %>
+          </div>
+       </div>
+    </div>
+ </div>
+</body>
+</html>
