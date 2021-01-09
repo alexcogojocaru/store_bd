@@ -8,7 +8,7 @@
 
    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-   <link rel="stylesheet" href="css/font-awesome.min.css">
+   <link rel="stylesheet" href="css/all.min.css">
 
    <link rel="stylesheet" href="css/bootstrap.min.css">
 
@@ -19,26 +19,46 @@
    <link rel="stylesheet" href="css/slick.min.css">
 
    <link rel="stylesheet" href="css/responsive.css">
+   <link rel="stylesheet" href="css/data-style.css">
+
+   <script src="https://kit.fontawesome.com/af98b1bb32.js" crossorigin="anonymous"></script>
+
+   <style>
+      ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #333;
+      }
+      
+      li {
+        float: right;
+      }
+
+      ul h1 {
+         float: left;
+         margin-left: 20px;
+      }
+      
+      li a {
+        display: block;
+        color: white;
+        text-align: center;
+        padding: 14px 16px;
+        text-decoration: none;
+      }
+      
+      li a:hover {
+        background-color: #111;
+      }
+      </style>
 </head>
 
 <body>
-   <!-- <header id="header" class="top-head">
-      <nav class="navbar navbar-default">
-         <div class="container-fluid">
-            <div class="row">
-               <div class="col-md-8 col-sm-12 navbar-left">
-                  <div class="right-nav">
-                     <div class="login-sr">
-                        <div class="login-signup">
-                           <ul>
-                              <li><a href="/">Login</a></li>
-                              <li><a class="custom-b" href="#">Sign up</a></li>
-                           </ul>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-            </div>
-         </div>
-      </nav>
-   </header> -->
+   <ul>
+      <form action="/cart" method="POST">
+        <li><a href="cart"><i class="fas fa-shopping-cart fa-3x"></i></a></li>
+      </form>
+      <h1><%= pageTitle %></h1>
+   </ul>

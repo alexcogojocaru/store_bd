@@ -1,4 +1,4 @@
-class DatabaseHeaders {
+module.exports = class DatabaseHeaders {
     static #tables = {
         1 : ['users', ['username', 'email', 'device', 'password', 'ip']],
         2 : ['games', ['game_name', 'price', 'genre']],
@@ -19,5 +19,3 @@ class DatabaseHeaders {
         return [undefined, undefined];
     }
 };
-
-module.exports = DatabaseHeaders;

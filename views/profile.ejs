@@ -9,22 +9,16 @@
                      </div>
                   </div>
                   <div class="row clearfix">
-                    <div class="col-lg-3 col-sm-6 col-md-3">
-                        <a href="productpage.html">
-                           <div class="box-img">
-                              <h4>Query</h4>
-                              <img src="images/red_dead_redemption.jpg" alt="" />
-                           </div>
-                        </a>
-                     </div>
-                     <div class="col-lg-3 col-sm-6 col-md-3">
-                        <a href="productpage.html">
-                           <div class="box-img">
-                              <h4>Query</h4>
-                              <img src="images/red_dead_redemption.jpg" alt="" />
-                           </div>
-                        </a>
-                     </div>
+                     <% for (var index = 0; index < games.length; index++) { %>
+                        <div class="col-lg-3 col-sm-6 col-md-3">
+                           <a href=<%= games[index].toString().toLowerCase() %>>
+                              <div class="box-img">
+                                 <h4><%= games[index] %></h4>
+                                 <img src="<%= `img/${games[index].toString().toLowerCase()}.jpg` %>" alt="" />
+                              </div>
+                           </a>
+                        </div>
+                     <% } %>
                   </div>
                </div>
             </div>

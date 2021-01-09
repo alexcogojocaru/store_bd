@@ -1,3 +1,6 @@
+const { uptime } = require('process');
+const UsersConnected = require('./users-connection.js');
+
 const express = require('express'),
       bodyParser = require('body-parser'),
       http = require('http'),
@@ -10,6 +13,8 @@ const express = require('express'),
       port = 3000;
 
 let connection,
+    user_connection = require('./users-connection.js'),
+    userConnection = new user_connection(),
     genres = games = inputs = [],
     databaseConnected = initGenres = initGames = false,
     connectedUsers = developerData = dataHeader = [],
@@ -63,6 +68,8 @@ async function createConnection() {
         connection = await oracledb.getConnection(dbConfig);
         databaseConnected = true;
         console.log('Oracle connection successful...');
+        queryGenres();
+        queryGames();
     } catch (err) {
         console.error('Whoops');
         console.error(err);
@@ -135,32 +142,24 @@ app.use(express.static('public'));
 app.use('/css', express.static(__dirname + 'public/css'));
 app.use('/js', express.static(__dirname + 'public/js'));
 app.use('/img', express.static(__dirname + 'public/img'));
+app.use('/fontawesome', express.static(__dirname + 'fontawesome'));
 app.use(bodyParser.urlencoded({extended : true}));
 app.use(bodyParser.json());
 
 app.set('views', './views');
 app.set('view engine', 'ejs');
 
-app.get('/store', (req, res) => {
-    if (!initGenres) {
-        queryGenres();
-    }
-
-    if (!initGames) {
-        queryGames();
-    }
-
-    // if (checkIp(ip(req))) {
-    //     res.render('store', { "title" : "Store", "genres" : genres });
-    // }
-    res.render('store', { "title" : "Store", "genres" : genres });
-});
-
 app.get('/', async (req, res) => {
     console.log(ip(req));
 
     if (!checkIp(ip(req))) {
         res.render('login', { "title" : "Login | Store", "pageTitle" : "Login" });
+    }
+});
+
+app.get('/store', (req, res) => {
+    if (checkIp(ip(req))) {
+        res.render('store', { "title" : "Store", "pageTitle" : "Store", "genres" : genres });
     }
 });
 
@@ -181,7 +180,20 @@ app.get('/dev', (req, res) => {
 });
 
 app.get('/profile', (req, res) => {
-    res.render('profile', { "title" : "Profile | Store", "pageTitle" : "Profile", "genres" : genres });
+    res.render('profile', { 
+        "title" : "Profile | Store", 
+        "pageTitle" : `Profile | ${userConnection.getUsers()[ip(req)]}`, 
+        "games" : async () => {
+            let response = await executeQuery(`select * from users_games where username=:username`, { 
+                "username" : userConnection.getUsers()[ip(req)] 
+            });
+
+            console.log(response.query[0]);
+        } });
+});
+
+app.get('/order', (req, res) => {
+    res.render('order', { "title" : "Order | Store", "pageTitle" : "Order", "games" : ['d', 's', 'a'] })
 });
 
 app.get('/action', (req, res) => {
@@ -214,6 +226,11 @@ app.get('/multiplayer', (req, res) => {
     res.render('partials/genres', { "title" : "Action | Store", "pageTitle" : "Multiplayer", "games" : filteredGames });
 });
 
+app.get('/cart', (req, res) => {
+    console.log(userConnection.getOrders()[ip(req)].values());
+    res.render('cart', { "games" : Array.from(userConnection.getOrders()[ip(req)]) })
+});
+
 /*
     Post request for the login page
 */
@@ -240,6 +257,7 @@ app.post('/login', async (req, res) => {
 
                     if (checkIp(ip(req))) {
                         console.log('Redirected');
+                        userConnection.addUser(ip(req), queriedUsername);
                         res.redirect('/store');
                     }
                 }
@@ -252,6 +270,16 @@ app.post('/login', async (req, res) => {
             console.log(err);
         }
     }
+});
+
+app.post('/genre', (req, res) => {
+    const price = req.body.price;
+    const name = req.body.gameName;
+    // console.log(price);
+    // console.log(name);
+
+    userConnection.executeOrder(ip(req), name);
+    console.log(userConnection.getOrders());
 });
 
 app.post('/dev', async (req, res) => {
@@ -335,6 +363,25 @@ app.post('/register', async (req, res) => {
 
             res.redirect('/');
         }
+    }
+});
+
+app.post('/order', async (req, res) => {
+    if (databaseConnected) {
+        userConnection.getOrders()[ip(req)].forEach(async (game) => {
+            let query = await executeQuery(
+                'insert into users_games values (null, :username, :game)',
+                {
+                    'username' : userConnection.getUsers()[ip(req)],
+                    'game' : game
+                },
+                true
+            );
+
+            userConnection.eliminateOrder(ip(req), game);
+        });
+
+        res.redirect('store');
     }
 });
 

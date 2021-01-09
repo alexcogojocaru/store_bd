@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="css/animate-wow.css">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="css/slick.min.css">
+
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/data-style.css">
+    <link rel="stylesheet" href="css/all.min.css">
+    <title>Add to Cart Interaction | CodyHouse</title>
+    <style>
+      body {
+        background-color: #222831;
+      }
+
+      p {
+        color: #ffffff;
+      }
+
+      img {
+        height: 200px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-content-product">
+      <div class="main-product">
+        <div class="container">
+          <% for (var index = 0; index < games.length; index++) { %>
+            <div class="box-img">
+              <h4><%= games[index] %></h4>
+              <img src="<%= `img/${games[index].replace(/\s/g, '_').toLowerCase()}.jpg` %>" alt="" />
+            </div>
+          <% } %>
+              
+          <div class="data-form">
+            <form action="/order" method="POST">
+              <input type="submit" value="ORDER" name="order">
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
