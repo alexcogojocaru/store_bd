@@ -1,7 +1,7 @@
 module.exports = class DatabaseHeaders {
     static #tables = {
         1 : ['users', ['username', 'email', 'device', 'password', 'ip']],
-        2 : ['games', ['game_name', 'price', 'genre']],
+        2 : ['games', ['game_name', 'price', 'genre', 'quantity']],
         3 : ['genres', ['genre']],
         4 : ['orders', 
             ['id_order', 'card_number', 'expiration_date', 'cvv', 'id_device', 'username', 'game_name']

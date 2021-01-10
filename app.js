@@ -1,5 +1,5 @@
-const { uptime } = require('process');
 const UsersConnected = require('./users-connection.js');
+const JSAlert = require('js-alert');
 
 const express = require('express'),
       bodyParser = require('body-parser'),
@@ -8,13 +8,12 @@ const express = require('express'),
       dbConfig = require('./dbconfig.js'),
       sha256 = require('js-sha256').sha256,
       app = express(),
-      server = http.createServer(app)
+      server = http.createServer(app),
       DatabaseHeaders = require('./database-header.js'),
       port = 3000;
 
 let connection,
-    user_connection = require('./users-connection.js'),
-    userConnection = new user_connection(),
+    userConnection = new UsersConnected(),
     genres = games = inputs = [],
     databaseConnected = initGenres = initGames = false,
     connectedUsers = developerData = dataHeader = [],
@@ -24,7 +23,8 @@ let connection,
 const tablePlaceholders = {
     1 : ['username', 'email', 'password'],
     2 : ['game_name', 'price', 'genre'],
-    4 : ['card_number', 'expiration_date', 'cvv']
+    4 : ['card_number', 'expiration_date', 'cvv'],
+    7 : ['id_device']
 };
 
 oracledb.autoCommit = true;
@@ -49,18 +49,6 @@ class Response {
     }
 };
 
-class RequestLogin {
-    static approveRequest(req) {
-        const ipReq = ip(req);
-        for (var i = 0; i < connectedUsers.length; i++) {
-            if (connectedUsers[i]['ip'] == ipReq) {
-                return true;
-            }
-        }
-        return false;
-    }
-};
-
 async function createConnection() {
     try {
         console.log('Initializing the oracle client...');
@@ -82,17 +70,20 @@ async function executeQuery(sqlStatement, bind, insert=false) {
     let resp = false;
 
     if (databaseConnected) {
-        query = await connection.execute(sqlStatement, bind);
-        resp = true;
+        try {
+            query = await connection.execute(sqlStatement, bind);
+            resp = true;
 
-        if (!insert) {
-            if (query.rows.length == 0) {
-                resp = false;
+            if (!insert) {
+                if (query.rows.length == 0) {
+                    resp = false;
+                }
             }
+        } catch (err) {
+            resp = false;
         }
     }
 
-    console.log('Return value');
     return new Response(resp, query);
 };
 
@@ -112,7 +103,7 @@ let ip = (req) => req.headers['x-forwarded-for'] || req.connection.remoteAddress
 let queryGenres = async () => {
     if (databaseConnected) {
         let genreResp = await executeQuery('select * from genres', {});
-        console.log('Genres queried');
+        console.log('\x1b[31m', 'Genres queried');
         genres = (genreResp.resp) ? genreResp.query.rows : [];
         initGenres = true;
     }
@@ -120,22 +111,10 @@ let queryGenres = async () => {
 let queryGames = async () => {
     if (databaseConnected) {
         let gamesResp = await executeQuery('select * from games', {});
-        console.log('Games queried');
+        console.log('\x1b[31m', 'Games queried');
         games = (gamesResp.resp) ? gamesResp.query.rows : [];
-        console.log(games);
         initGames = true;
     }
-};
-
-let getUserByIp = (req) => {
-    if (connectedUsers.length > 0) {
-        for (var i = 0; i < connectedUsers.length; i++) {
-            if (connectedUsers[i]['ip'] === ip(req)) {
-                return connectedUsers[i]['username'];
-            }
-        }
-    }
-    return undefined;
 };
 
 app.use(express.static('public'));
@@ -150,8 +129,6 @@ app.set('views', './views');
 app.set('view engine', 'ejs');
 
 app.get('/', async (req, res) => {
-    console.log(ip(req));
-
     if (!checkIp(ip(req))) {
         res.render('login', { "title" : "Login | Store", "pageTitle" : "Login" });
     }
@@ -159,7 +136,7 @@ app.get('/', async (req, res) => {
 
 app.get('/store', (req, res) => {
     if (checkIp(ip(req))) {
-        res.render('store', { "title" : "Store", "pageTitle" : "Store", "genres" : genres });
+        res.render('store', { "title" : "Store", "pageTitle" : "Store", "store" : true, "genres" : genres });
     }
 });
 
@@ -179,56 +156,54 @@ app.get('/dev', (req, res) => {
     });
 });
 
-app.get('/profile', (req, res) => {
+app.get('/profile', async (req, res) => {
+    let response = await executeQuery(`select * from users_games where username=:username`, { 
+        "username" : userConnection.getUsers()[ip(req)] 
+    });
+    let profileGames = [];
+
+    if (response.resp === true) {
+        profileGames = response.query.rows;
+    }
+
+    console.log(`profile ${userConnection.getUsers()[ip(req)]}`);
+
     res.render('profile', { 
         "title" : "Profile | Store", 
         "pageTitle" : `Profile | ${userConnection.getUsers()[ip(req)]}`, 
-        "games" : async () => {
-            let response = await executeQuery(`select * from users_games where username=:username`, { 
-                "username" : userConnection.getUsers()[ip(req)] 
-            });
-
-            console.log(response.query[0]);
-        } });
+        "games" : profileGames,
+        "store" : false
+    });
 });
 
-app.get('/order', (req, res) => {
-    res.render('order', { "title" : "Order | Store", "pageTitle" : "Order", "games" : ['d', 's', 'a'] })
-});
+app.get('/store/:genre', (req, res) => {
+    const genr = req.params.genre;
+    let capitalized = genr.charAt(0).toUpperCase() + genr.slice(1);
 
-app.get('/action', (req, res) => {
-    let filteredGames = games.filter(game => game[2] === 'Action');
-    res.render('partials/genres', { "title" : "Action | Store", "pageTitle" : "Action", "games" : filteredGames });
-});
+    if (genr === 'mmorpg') {
+        capitalized = genr.toUpperCase();
+    }
 
-app.get('/adventure', (req, res) => {
-    let filteredGames = games.filter(game => game[2] === 'Adventure');
-    res.render('partials/genres', { "title" : "Adventure | Store", "pageTitle" : "Adventure", "games" : filteredGames });
-});
-
-app.get('/horror', (req, res) => {
-    let filteredGames = games.filter(game => game[2] === 'Horror');
-    res.render('partials/genres', { "title" : "Action | Store", "pageTitle" : "Horror", "games" : filteredGames });
-});
-
-app.get('/indie', (req, res) => {
-    let filteredGames = games.filter(game => game[2] === 'Indie');
-    res.render('partials/genres', { "title" : "Action | Store", "pageTitle" : "Indie", "games" : filteredGames });
-});
-
-app.get('/mmorpg', (req, res) => {
-    let filteredGames = games.filter(game => game[2] === 'MMORPG');
-    res.render('partials/genres', { "title" : "Action | Store", "pageTitle" : "MMORPG", "games" : filteredGames });
-});
-
-app.get('/multiplayer', (req, res) => {
-    let filteredGames = games.filter(game => game[2] === 'Multiplayer');
-    res.render('partials/genres', { "title" : "Action | Store", "pageTitle" : "Multiplayer", "games" : filteredGames });
+    let filteredGames = games.filter(game => game[2] === capitalized);
+    
+    res.render('genres', {
+        "title" : `${capitalized} | Store`,
+        "pageTitle" : capitalized,
+        "games" : filteredGames,
+        "store" : false
+    });
 });
 
 app.get('/cart', (req, res) => {
-    console.log(userConnection.getOrders()[ip(req)].values());
-    res.render('cart', { "games" : Array.from(userConnection.getOrders()[ip(req)]) })
+    let cartGames = [];
+
+    if (userConnection.getOrders()[ip(req)] != undefined) {
+        cartGames = Array.from(userConnection.getOrders()[ip(req)]);
+    }
+    
+    if (cartGames.length > 0) {
+        res.render('cart', { "games" : cartGames });
+    }
 });
 
 /*
@@ -248,7 +223,7 @@ app.post('/login', async (req, res) => {
                 const queriedPassword = response.query.rows[0][3];
 
                 if ((username === queriedUsername) && (sha256(password) === queriedPassword)) {
-                    console.log(`Connection accepted for ${ip(req)} user=${username}`)
+                    console.log('\x1b[32m', `Connection accepted for ${ip(req)} user=${username}`)
 
                     var element = { username : queriedUsername, ip: ip(req) };
                     connectedUsers.pushSet(element, function(e) {
@@ -272,21 +247,55 @@ app.post('/login', async (req, res) => {
     }
 });
 
-app.post('/genre', (req, res) => {
+app.post('/genre', async (req, res) => {
     const price = req.body.price;
     const name = req.body.gameName;
-    // console.log(price);
-    // console.log(name);
 
-    userConnection.executeOrder(ip(req), name);
-    console.log(userConnection.getOrders());
+    let response = await executeQuery('select quantity from games where game_name=:game', {
+        'game' : name
+    });
+
+    const quantity = response.query.rows[0][0];
+
+    if (quantity === 0) {
+        JSAlert.alert('The game is out of stock');
+    }
+
+    if (quantity > 0) {
+        const userGenreName = userConnection.getUsers()[ip(req)];
+        console.log(userGenreName);
+        let genreNameResponse = await executeQuery('select game_name from users_games where username=:username', {
+            'username' : userGenreName
+         });
+
+        var checkGame = false;
+        for (var i = 0; i < genreNameResponse.query.rows.length; i++) {
+            if (genreNameResponse.query.rows[i][0] === name) {
+                checkGame = true;
+                break;
+            }
+            console.log(genreNameResponse.query.rows[i][0]);
+        }
+
+        if (checkGame === false) {
+            let updateQuantity = await executeQuery('update games set quantity=:quantity where game_name=:name', {
+                'quantity' : quantity - 1,
+                'name' : name
+            }, true);
+    
+            userConnection.executeOrder(ip(req), name);
+        }
+        else {
+            console.log('Game already in library');
+        }
+        console.log(userConnection.getOrders());
+    }
 });
 
 app.post('/dev', async (req, res) => {
     const option = req.body.select;
-    const selectOption = req.body.selection;
+    devOption = req.body.selection;
     let selectStatement;
-    devOption = selectOption;
 
     if (Object.keys(tablePlaceholders).includes(devOption)) {
         inputs = tablePlaceholders[devOption];
@@ -300,7 +309,7 @@ app.post('/dev', async (req, res) => {
         let response;
 
         if (option === 'SELECT') {
-            databaseInfo = DatabaseHeaders.getTable(selectOption);
+            databaseInfo = DatabaseHeaders.getTable(devOption);
             dataHeader = databaseInfo[1];
             selectStatement = `select * from ${databaseInfo[0]}`
             selectTable = true;
@@ -314,7 +323,10 @@ app.post('/dev', async (req, res) => {
         }
         else if (option === 'INSERT') {
             if (devOption == 1) {
-                
+                const placeholder0 = req.body.placeholder0;
+                const placeholder1 = req.body.placeholder1;
+                const placeholder2 = req.body.placeholder2;
+
                 let query = await executeQuery(
                     'insert into users values (:username, :email, \'DESKTOP\', :password, :ip)', 
                     {
@@ -327,12 +339,27 @@ app.post('/dev', async (req, res) => {
                 );
             }
             else if (devOption == 2) {
+                const placeholder0 = req.body.placeholder0;
+                const placeholder1 = req.body.placeholder1;
+                const placeholder2 = req.body.placeholder2;
+
                 let query = await executeQuery(
-                    'insert into games values (:game_name, :price, :genre)', 
+                    'insert into games values (:game_name, :price, :genre, 5)', 
                     {
                         'game_name' : placeholder0,
                         'price' : placeholder1,
                         'genre' : placeholder2
+                    }, 
+                    true
+                );
+            }
+            else if (devOption == 7) {
+                const placeholder0 = req.body.placeholder0;
+                
+                let query = await executeQuery(
+                    'insert into registered_devices values (:id)', 
+                    {
+                        'id' : placeholder0
                     }, 
                     true
                 );
@@ -361,25 +388,73 @@ app.post('/register', async (req, res) => {
                 true
             );
 
+            query = await executeQuery(
+                'insert into registered_devices values (:id_device)',
+                {
+                    'id_device' : ip(req)
+                },
+                true
+            );
+
+            query = await executeQuery(
+                'insert into users_devices values (:id_device, :username)',
+                {
+                    'id_device' : ip(req),
+                    'username' : username
+                },
+                true
+            );
+
             res.redirect('/');
         }
     }
 });
 
 app.post('/order', async (req, res) => {
-    if (databaseConnected) {
-        userConnection.getOrders()[ip(req)].forEach(async (game) => {
-            let query = await executeQuery(
-                'insert into users_games values (null, :username, :game)',
-                {
-                    'username' : userConnection.getUsers()[ip(req)],
-                    'game' : game
-                },
-                true
-            );
+    const card_number = req.body.card_number;
+    const cvv = req.body.cvv;
+    const date = req.body.date;
 
-            userConnection.eliminateOrder(ip(req), game);
-        });
+    console.log(card_number);
+    console.log(cvv);
+    console.log(date);
+
+    if (databaseConnected) {
+        try {
+            userConnection.getOrders()[ip(req)].forEach(async (game) => {
+                let queryOrder = await executeQuery(
+                    `insert into orders values (null, :card, to_date(\'${date.split('-').join('.')}\', \'YYYY.MM.DD\'), ` +
+                    `:cvv, :device, ` + 
+                    `:username, ` +
+                    `:game)`,
+                    { 
+                        'card' : card_number,
+                        'device' : ip(req),
+                        'cvv' : cvv,
+                        'username' : userConnection.getUsers()[ip(req)],
+                        'game' : game
+                    }, true
+                );
+
+                if (queryOrder.resp === true) {
+                    let query = await executeQuery(
+                        'insert into users_games values (null, :username, :game)',
+                        {
+                            'username' : userConnection.getUsers()[ip(req)],
+                            'game' : game
+                        },
+                        true
+                    );
+                    userConnection.eliminateOrder(ip(req), game);
+                }
+                else {
+                    console.log('Order failed');
+                }
+            });
+        }
+        catch (err) {
+            console.log('\x1b[37m', 'Constraint violated');
+        }
 
         res.redirect('store');
     }

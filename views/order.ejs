@@ -4,6 +4,16 @@
             <div class="main-product">
                <div class="container">
                   <div class="row clearfix">
+                     <div class="data-form">
+                        <form action="/buy" method="POST">
+                           <input type="text" placeholder="card number"/>
+                           <input type="text" placeholder="cvv"/>
+                           <input type="text" placeholder="day"/>
+                           <input type="text" placeholder="month"/>
+                           <input type="date"/>
+                           <input type="text" placeholder="year"/>
+                        </form>
+                     </div>
                       <% for (var i = 0; i < games.length; i++) { %>
                         <div class="col-lg-3 col-sm-6 col-md-3">
                             <a href="productpage.html">

@@ -11,7 +11,7 @@
                <div class="row clearfix">
                   <% for (var index = 0; index < genres.length; index++) { %>
                      <div class="col-lg-3 col-sm-6 col-md-3">
-                        <a href=<%= genres[index].toString().toLowerCase() %>>
+                        <a href=<%= `store/${genres[index].toString().toLowerCase()}` %>>
                            <div class="box-img">
                               <h4><%= genres[index] %></h4>
                               <img src="<%= `img/${genres[index].toString().toLowerCase()}.jpg` %>" alt="" />

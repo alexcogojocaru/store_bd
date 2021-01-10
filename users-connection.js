@@ -26,7 +26,22 @@ module.exports = class UsersConnected {
         }
     }
 
+    checkGame(ip, gameName) {
+        if (this.checkIp(ip)) {
+            return this.#orders[ip].has(gameName);
+        }
+        return false;
+    }
+
     eliminateOrder(ip, gameName) {
         this.#orders[ip].delete(gameName);
+    }
+
+    // checkUser(username) {
+    //     return Object.keys(this.#users).find(key => this.#users[key] == username);
+    // }
+
+    checkIp(ip) {
+        return (Object.keys(this.#users).indexOf(ip) == -1);
     }
 };

@@ -8,18 +8,18 @@
 
    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-   <link rel="stylesheet" href="css/all.min.css">
+   <link rel="stylesheet" href="/css/all.min.css">
 
-   <link rel="stylesheet" href="css/bootstrap.min.css">
+   <link rel="stylesheet" href="/css/bootstrap.min.css">
 
-   <link rel="stylesheet" href="css/animate-wow.css">
+   <link rel="stylesheet" href="/css/animate-wow.css">
 
-   <link rel="stylesheet" href="css/style.css">
-   <link rel="stylesheet" href="css/bootstrap-select.min.css">
-   <link rel="stylesheet" href="css/slick.min.css">
+   <link rel="stylesheet" href="/css/style.css">
+   <link rel="stylesheet" href="/css/bootstrap-select.min.css">
+   <link rel="stylesheet" href="/css/slick.min.css">
 
-   <link rel="stylesheet" href="css/responsive.css">
-   <link rel="stylesheet" href="css/data-style.css">
+   <link rel="stylesheet" href="/css/responsive.css">
+   <link rel="stylesheet" href="/css/data-style.css">
 
    <script src="https://kit.fontawesome.com/af98b1bb32.js" crossorigin="anonymous"></script>
 
@@ -50,7 +50,18 @@
       }
       
       li a:hover {
-        background-color: #111;
+        background-color: transparent;
+      }
+
+      #profile {
+        display: block;
+        margin-top: 10px;
+        font-size: medium;
+        font-weight: bold;
+      }
+
+      h1 a {
+        color: white;
       }
       </style>
 </head>
@@ -58,7 +69,11 @@
 <body>
    <ul>
       <form action="/cart" method="POST">
-        <li><a href="cart"><i class="fas fa-shopping-cart fa-3x"></i></a></li>
+        <li><a href="/cart"><i class="fas fa-shopping-cart fa-3x"></i></a></li>
       </form>
-      <h1><%= pageTitle %></h1>
+      <li><a id="profile" href="/profile">profile</a></li>
+      <h1><a href="/store">Store</a></h1>
+      <% if (!store) {%>
+        <h1><%= pageTitle %></h1>
+      <% } %> 
    </ul>
